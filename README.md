@@ -3,8 +3,8 @@
 電気自動車に関する○×クイズを、カメラに映った体のポーズで答えるシステム。
 
 ## Web 版（インストール不要）
-https://salt6004.github.io/ev-quiz/ を開くだけで遊べる（Windows・Mac・iPad など。Chrome / Edge / Safari）。カメラを許可し、読み上げは最初に一度画面をクリックすると鳴る。
-- 中身は GitHub の公開リポジトリ salt6004/ev-quiz（URL を知っていれば誰でも見られる）。
+https://takuden-formula.github.io/ev-quiz/ を開くだけで遊べる（Windows・Mac・iPad など。Chrome / Edge / Safari）。カメラを許可し、読み上げは最初に一度画面をクリックすると鳴る。
+- 中身は GitHub の公開リポジトリ Takuden-Formula/ev-quiz（URL を知っていれば誰でも見られる）。
 - このフォルダを直しても Web 版は変わらない。直したら、リポジトリに同じファイルを上書きして push する（1〜2分で反映）。
 
 ## 遊び方
