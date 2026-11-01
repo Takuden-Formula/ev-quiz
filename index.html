@@ -105,6 +105,56 @@
   #score{font-size:clamp(90px,16vw,200px);font-weight:200;line-height:1;letter-spacing:-.02em;color:var(--lv);text-shadow:0 0 50px color-mix(in srgb,var(--lv) 40%,transparent)}
   #score small{font-size:.28em;color:var(--sub);letter-spacing:.04em;margin-left:.2em}
   .rank{font-size:clamp(22px,3vw,38px);font-weight:700;letter-spacing:.1em;margin:10px 0 6px}
+  #rsToday{font-size:clamp(18px,2.2vw,28px);font-weight:700;color:#0f9d76;margin:4px 0 8px;letter-spacing:.06em}
+  #rsBack{margin-top:18px;font-size:13px;color:var(--dim);letter-spacing:.08em}
+
+  /* 待機画面：本日のランキング・これまでの最高・見どころ（デモ） */
+  #board{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;width:min(1180px,94vw);margin-top:20px;text-align:left}
+  @media(max-width:900px){#board{grid-template-columns:1fr}}
+  #board .glass{border-radius:20px;padding:16px 22px;min-height:190px}
+  #board h3{margin:0 0 8px;font-size:15px;letter-spacing:.12em;color:#0f9d76;font-weight:700}
+  #rankTbl{width:100%;border-collapse:collapse;font-size:clamp(14px,1.4vw,18px);font-variant-numeric:tabular-nums}
+  #rankTbl td{padding:3px 6px;border-bottom:1px solid var(--line)}
+  #rankTbl td:first-child{font-weight:800;width:3em;color:var(--sub)}
+  #rankTbl tr.top td:first-child{color:#d28a00}
+  #rankTbl .lvTag{font-size:.8em;padding:1px 8px;border-radius:99px;border:1px solid currentColor}
+  #rankEmpty{color:var(--dim);font-size:15px;padding:18px 0}
+  #bestLine{margin-top:8px;font-size:13px;color:var(--sub);line-height:1.6}
+  #demo{position:relative;overflow:hidden}
+  #demo .slide{display:none;align-items:center;gap:18px;animation:rise .45s ease both}
+  #demo .slide.on{display:flex}
+  #demo svg{flex:0 0 auto;width:110px;height:140px}
+  #demo .txt{font-size:clamp(15px,1.6vw,20px);line-height:1.6}
+  #demo .txt b{font-size:1.25em}
+  #demo .ans{margin-top:8px;font-weight:700;opacity:0;transition:opacity .4s}
+  #demo .ans.on{opacity:1}
+  .fig line,.fig path{stroke:#1e8fe0;stroke-width:6;stroke-linecap:round;fill:none}
+  .fig circle.h{fill:#fff;stroke:#1e8fe0;stroke-width:5}
+  .fig circle.w{fill:#ff9f1a}
+  .fig .down{animation:figA 3s ease-in-out infinite}
+  .fig .up{animation:figB 3s ease-in-out infinite}
+  @keyframes figA{0%,25%{opacity:1}35%,90%{opacity:0}100%{opacity:1}}
+  @keyframes figB{0%,25%{opacity:0}35%,90%{opacity:1}100%{opacity:0}}
+
+  /* 画面下の状態表示・設定 */
+  #stbar{position:fixed;left:20px;bottom:12px;z-index:9;font-size:12px;color:var(--sub);letter-spacing:.04em;background:rgba(255,255,255,.7);padding:4px 12px;border-radius:99px;border:1px solid var(--line)}
+  #stbar .ok{color:#0f9d76} #stbar .ng{color:var(--ng)}
+  #gear{font:inherit;font-size:18px;line-height:1;width:34px;height:34px;border-radius:50%;color:var(--sub);background:rgba(255,255,255,.75);border:1px solid var(--line);cursor:pointer;touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none}
+  #gear:hover{border-color:var(--acc)}
+  #settings{position:fixed;top:0;right:0;height:100%;width:460px;max-width:100%;z-index:20;display:none;overflow-y:auto;
+    background:#f7fafd;border-left:1px solid var(--line);box-shadow:-10px 0 40px rgba(30,60,100,.18);padding:22px 26px 40px;text-align:left;user-select:text}
+  #settings.show{display:block}
+  #settings h2{margin:0 0 6px;font-size:22px}
+  #settings label{display:block;margin:14px 0 4px;color:var(--sub);font-size:14px}
+  #settings input[type=number],#settings select{width:100%;padding:6px 8px;font:inherit;font-size:15px;border:1px solid var(--line);border-radius:8px;background:#fff}
+  #settings input[type=range]{width:100%}
+  #settings .qs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-size:12px;color:var(--sub)}
+  #settings button{font:inherit;font-size:14px;margin:6px 6px 0 0;padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer}
+  #settings button:hover{border-color:#0f9d76}
+  #settings .note{color:var(--dim);font-size:13px;margin-top:4px;line-height:1.55}
+  #settings .close{position:absolute;top:16px;right:18px;margin:0}
+  #fsHint{position:fixed;left:50%;top:60px;transform:translateX(-50%);z-index:30;display:none;font-size:14px;padding:8px 18px;border-radius:99px;background:rgba(15,157,118,.92);color:#fff}
+  #fileMsg{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:var(--bg);font-size:clamp(18px,2.4vw,28px);line-height:1.8;padding:8vw;text-align:center}
 </style>
 </head>
 <body>
@@ -112,15 +162,18 @@
 <div id="vig"></div>
 <video id="cam" playsinline muted style="display:none"></video>
 
-<div id="hud"><span class="brand"><i></i>EV QUIZ</span><span id="hudLv" style="display:none"></span><span class="right"><span id="hudR"></span><button id="ttsBtn" title="M キーでも切替"></button></span></div>
+<div id="hud"><span class="brand"><i></i>EV QUIZ</span><span id="hudLv" style="display:none"></span><span class="right"><span id="hudR"></span><button id="ttsBtn" title="M キーでも切替"></button><button id="gear" title="設定（S キー。タッチ端末は長押し1秒）">⚙</button></span></div>
 <div id="timer"><i></i></div>
 <div id="status" class="glass">カメラとAIモデルを準備中…</div>
-<div class="hint">KEYS　1-4 レベル / O ○ / X × / Space 次へ / R もう一度 / M 読み上げ / V 声の切替 / ESC 中断</div>
+<div class="hint">KEYS　1-4 レベル / Enter 開始 / O ○ / X × / Space 次へ / R もう一度 / M 読み上げ / V 声の切替 / S 設定 / F 全画面 / ESC 中断</div>
+<div id="stbar"><span id="stRec"></span> ・ <span id="stToday"></span></div>
+<div id="fsHint">画面をクリックすると全画面になります（Esc で解除 ・ F で再び全画面）</div>
+<div id="fileMsg">index.html を直接開いても動きません。<br>フォルダ内の「起動.bat」（Mac は「起動_Mac.command」）をダブルクリックしてください。<br><small style="color:var(--sub)">インターネットがあれば https://takuden-formula.github.io/ev-quiz/ でも遊べます</small></div>
 
 <section class="screen on" id="sLevel">
   <div class="eyebrow">Body-judge ○× quiz</div>
   <h1>EV<b>クイズ</b></h1>
-  <p class="lead">体で <b>○</b> か <b>×</b> を答えよう。<br>レベルのカードに<b>手を1秒かざす</b>とスタートします。</p>
+  <p class="lead">体で <b>○</b> か <b>×</b> を答える電気自動車クイズ。<br>レベルのカードに<b>手を1秒かざす</b>（タップ／クリック／Enter でも）とスタート！</p>
   <div class="cards">
     <button class="btn easy" data-lv="easy"><span class="no">LEVEL 01</span><b>やさしい</b><small>はじめてでもOK。<br>EVの基本のき</small><span class="dots"><i class="on"></i><i></i><i></i><i></i></span></button>
     <button class="btn normal" data-lv="normal"><span class="no">LEVEL 02</span><b>ふつう</b><small>ちょっと電気の知識が<br>あると解ける</small><span class="dots"><i class="on"></i><i class="on"></i><i></i><i></i></span></button>
@@ -128,7 +181,22 @@
     <button class="btn expert" data-lv="expert"><span class="no">LEVEL 04 ・ EXPERT</span><b>エキスパート</b><small>制限12秒。制御・半導体・<br>規格まで、専門家向け</small><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></button>
   </div>
   <div id="unlock" class="glass">音声を有効にするには、画面を一度クリック（またはキーを押す）してください</div>
-  <div class="tip">音声が出ないときは、画面を一度クリック（またはキーを押す）してください ・ ベストスコアはこの端末に保存されます</div>
+  <div id="board">
+    <div class="glass"><h3>本日のランキング</h3><div id="rankBox"></div><div id="bestLine"></div></div>
+    <div class="glass" id="demo"><h3>見どころ</h3>
+      <div class="slide" data-s="o"><svg class="fig" viewBox="0 0 120 150"><circle class="h" cx="60" cy="30" r="13"/><line x1="60" y1="43" x2="60" y2="100"/><line x1="40" y1="52" x2="80" y2="52"/><line x1="60" y1="100" x2="45" y2="142"/><line x1="60" y1="100" x2="75" y2="142"/>
+        <g class="down"><path d="M40 52 L34 78 L36 100"/><path d="M80 52 L86 78 L84 100"/><circle class="w" cx="36" cy="100" r="6"/><circle class="w" cx="84" cy="100" r="6"/></g>
+        <g class="up"><path d="M40 52 L26 26 L55 6"/><path d="M80 52 L94 26 L65 6"/><circle class="w" cx="56" cy="6" r="6"/><circle class="w" cx="64" cy="6" r="6"/></g></svg>
+        <div class="txt">答えが <b style="color:var(--ok)">○</b> だと思ったら<br><b>両手を頭の上でくっつける</b><br><small style="color:var(--sub)">そのまま約1秒キープで決定</small></div></div>
+      <div class="slide" data-s="x"><svg class="fig" viewBox="0 0 120 150"><circle class="h" cx="60" cy="30" r="13"/><line x1="60" y1="43" x2="60" y2="100"/><line x1="40" y1="52" x2="80" y2="52"/><line x1="60" y1="100" x2="45" y2="142"/><line x1="60" y1="100" x2="75" y2="142"/>
+        <g class="down"><path d="M40 52 L34 78 L36 100"/><path d="M80 52 L86 78 L84 100"/><circle class="w" cx="36" cy="100" r="6"/><circle class="w" cx="84" cy="100" r="6"/></g>
+        <g class="up"><path d="M40 52 L46 78 L84 60"/><path d="M80 52 L74 78 L36 60"/><circle class="w" cx="84" cy="60" r="6"/><circle class="w" cx="36" cy="60" r="6"/></g></svg>
+        <div class="txt">答えが <b style="color:var(--ng)">×</b> だと思ったら<br><b>両腕を胸の前でクロスする</b><br><small style="color:var(--sub)">そのまま約1秒キープで決定</small></div></div>
+      <div class="slide" data-s="q"><div class="txt"><small style="color:var(--sub)">たとえば、こんな問題</small><div id="demoQ" style="font-weight:600"></div><div class="ans" id="demoA"></div></div></div>
+      <div class="slide" data-s="info"><div class="txt"><b>4つのレベル・全101問</b><br>10問をランダムに出題。答えたあとに<b>解説</b>を読み上げます。<br><small style="color:var(--sub)">いちばん難しい「エキスパート」は1問12秒！</small></div></div>
+    </div>
+  </div>
+  <div class="tip">音声が出ないときは、画面を一度クリック（またはキーを押す）してください ・ これまでの最高はこの端末に保存されます</div>
 </section>
 
 <div id="qpanel" class="glass">
@@ -159,14 +227,48 @@
   <div class="eyebrow" id="rsLevel"></div>
   <div id="score"></div>
   <div class="rank" id="rsRank"></div>
+  <div id="rsToday"></div>
   <p class="lead" id="rsBest" style="margin-bottom:34px"></p>
   <div class="btns">
     <button class="btn plain" data-act="retry"><b>もう一度</b></button>
     <button class="btn plain" data-act="levels"><b>レベル選択へ</b></button>
   </div>
+  <div id="rsBack"></div>
 </section>
 
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js" crossorigin="anonymous"></script>
+<div id="settings">
+  <button class="close" id="setClose">閉じる</button>
+  <h2>設定（S キーで開閉）</h2>
+  <div class="note">スタッフ用。設定はこのブラウザに保存されます。</div>
+  <label>放置で待機画面に戻るまで [秒]</label>
+  <input type="number" id="idleSec" min="15" max="600" step="5">
+  <div class="note">遊んでいる途中でも、カメラに人が映らず操作も無い状態がこの秒数続くと待機画面（レベル選択）に戻ります。3問続けて時間切れになったときも戻ります。</div>
+  <label>結果画面から待機画面に戻るまで [秒]</label>
+  <input type="number" id="resultSec" min="5" max="300" step="5">
+  <label>制限時間 [秒]（1問あたり。問題の読み上げ中は止まる）</label>
+  <div class="qs"><div>やさしい<input type="number" id="qs_easy" min="5" max="120"></div><div>ふつう<input type="number" id="qs_normal" min="5" max="120"></div><div>むずかしい<input type="number" id="qs_hard" min="5" max="120"></div><div>エキスパート<input type="number" id="qs_expert" min="5" max="120"></div></div>
+  <label><input type="checkbox" id="sound"> 効果音（正解・不正解・カウントダウン・結果）</label>
+  <label>効果音の音量: <b id="volVal"></b></label>
+  <input type="range" id="vol" min="0" max="100" step="10">
+  <label><input type="checkbox" id="ttsChk"> 読み上げ（問題・解説。M キーでも切替）</label>
+  <label>読み上げの声（V キーでも切替）</label>
+  <select id="packSel"></select>
+  <label>記録を保存するフォルダ</label>
+  <div class="note">フォルダ: <b id="recName">未設定</b> <span id="recState"></span></div>
+  <button id="btnRecPick">フォルダを選ぶ</button>
+  <button id="btnRecLoad">記録を読み込み直す</button>
+  <button id="btnRecCsv">CSV を書き出す</button>
+  <div class="note">選んだフォルダに records.csv を作り、1回遊ぶごとに1行足します（Excel で開けます）。起動時にそこから本日のランキングと人数を読み込みます。<br>
+    ブラウザを開き直したあとは、最初に画面をクリックしたときに「フォルダの編集を許可」と聞かれるので「許可」を押してください。フォルダを選べないブラウザ（Safari など）はブラウザの中に残し、「CSV を書き出す」でダウンロードします。</div>
+  <label>集計</label>
+  <div class="note" id="statsDetail"></div>
+  <button id="btnReset">本日の集計とランキングをリセット</button>
+  <div class="note">records.csv の中身は消しません（リセットより前の行を本日の集計に数えなくなるだけ）。これまでの最高も消えません。</div>
+  <div class="note" style="margin-top:14px">キー操作: 1-4 = レベルを選んで開始 / Enter = 前回のレベルで開始 / O・X = 回答 / Space = 次へ / R = もう一度 / M = 読み上げ / V = 声 / S = 設定 / F = 全画面 / Esc = 中断（全画面のときは全画面解除）</div>
+</div>
+
+<script src="lib/mediapipe_pose/pose.js"></script>
+<script src="records.js"></script>
 <script src="questions.js"></script>
 <script src="speech.js"></script>
 <script>
@@ -177,8 +279,17 @@ const Q_SEC     = 20;     // 1問の制限時間
 const REVEAL_MS = 6000;   // 正解表示の自動送り
 const DWELL_MS  = 1000;   // ボタンに手をかざす時間
 const LEVELS = { easy:"やさしい", normal:"ふつう", hard:"むずかしい", expert:"エキスパート" };
-const Q_SECS = { easy:20, normal:20, hard:18, expert:12 };   // レベル別の制限時間
+const Q_SECS = { easy:20, normal:20, hard:18, expert:12 };   // レベル別の制限時間（初期値。設定で変えられる）
+const LV_ORDER = ['easy','normal','hard','expert'];
+const MISS_LIMIT = 3;     // 続けて時間切れになったら待機画面へ戻る回数
 let hist=[], qHold=false, qHoldAt=0, qSeen=false;
+
+/* ============ スタッフ設定（S キー / ⚙。localStorage に保存） ============ */
+const SKEY='evquiz_settings';
+const DEF={ idleSec:60, resultSec:20, sound:true, vol:60, qsecs:Object.assign({},Q_SECS) };
+const settings=(()=>{ let o={}; try{ o=JSON.parse(localStorage.getItem(SKEY))||{}; }catch(e){}
+  const s=Object.assign({},DEF,o); s.qsecs=Object.assign({},Q_SECS,o.qsecs||{}); return s; })();
+function saveSettings(){ try{ localStorage.setItem(SKEY, JSON.stringify(settings)); }catch(e){} }
 
 /* ============ ポーズ判定（テスト可能な純関数） ============
    lm: MediaPipe Pose の 33 点（x,y は 0-1 の正規化座標）, asp: 映像の 幅/高さ
@@ -209,20 +320,29 @@ let state='level', level=null, qs=[], idx=0, score=0;
 let lm=null, vw=1280, vh=720, ready=false;
 let armed=false, neutralSince=0, holdLabel=null, holdStart=0, qStart=0, revealAt=0, lastAnswer=null;
 let dwell=new Map(), cursors=[], screenAt=0, lostAt=0, running=false;
+let ansSec=0, missRow=0, lastAct=0, lastBody=0, lastTick=0, resultAt=0, lastLevel='easy', myRankId=null;
 
 function resize(){ cv.width=innerWidth*devicePixelRatio; cv.height=innerHeight*devicePixelRatio; }
 addEventListener('resize', resize); resize();
 
-/* ============ 音 ============ */
+/* ============ 効果音（WebAudio で合成。音声ファイルは使わない） ============ */
 let actx=null;
-function beep(f,d=.15,t='sine',v=.15){ try{
-  actx=actx||new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume();
-  const o=actx.createOscillator(),g=actx.createGain(); o.type=t;o.frequency.value=f;g.gain.value=v;
-  o.connect(g);g.connect(actx.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+d);o.stop(actx.currentTime+d);
+function audioCtx(){ try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume(); }catch(e){} return actx; }
+// 最初のクリック・キー操作で AudioContext を動かしておく（ブラウザの決まりで、操作の前は音が出ない）
+addEventListener('pointerdown', ()=>audioCtx(), true); addEventListener('keydown', ()=>audioCtx(), true);
+function beep(f,d=.15,t='sine',v=.15,delay=0){ try{
+  if(!settings.sound || !settings.vol) return;
+  const c=audioCtx(); if(!c) return;
+  const t0=c.currentTime+delay, o=c.createOscillator(),g=c.createGain(); o.type=t;o.frequency.value=f;
+  g.gain.setValueAtTime(v*settings.vol/60,t0);
+  o.connect(g);g.connect(c.destination);o.start(t0);g.gain.exponentialRampToValueAtTime(.001,t0+d);o.stop(t0+d);
 }catch(e){} }
-const sndOK=()=>{beep(660,.12);setTimeout(()=>beep(990,.25),110)};
+const sndOK=()=>{beep(660,.12);beep(990,.25,'sine',.15,.11)};
 const sndNG=()=>{beep(220,.35,'sawtooth',.12)};
 const sndSel=()=>beep(520,.1);
+const sndStart=()=>{ [523,659,784].forEach((f,i)=>beep(f,.14,'triangle',.16,i*.12)); };
+const sndTick=last=>beep(last?1320:880,.08,'square',.06);              // 残り5秒からのカウントダウン
+const sndResult=good=>{ (good?[523,659,784,1047,784,1047]:[392,523,659]).forEach((f,i)=>beep(f,i===(good?5:2)?.5:.16,'triangle',.16,i*.15)); };
 
 /* ============ 読み上げ（ブラウザ内蔵の音声合成） ============ */
 const TTS_OK = 'speechSynthesis' in window;
@@ -323,7 +443,7 @@ renderTts();
 /* ============ 画面切替 ============ */
 function show(which){
   if(which==='sLevel' && typeof stopSpeech==='function') stopSpeech();
-  if(which==='sLevel') delete document.body.dataset.lv;
+  if(which==='sLevel'){ delete document.body.dataset.lv; renderBoard(); demoStart(); } else demoStop();
   dwell.clear(); screenAt=performance.now();
   ['sLevel','sResult'].forEach(id=>$(id).classList.toggle('on', id===which));
   const q = which==='question';
@@ -336,16 +456,23 @@ function show(which){
   $('ring').style.display='none';
 }
 function startGame(lv){
-  level=lv; score=0; idx=0; hist=[]; document.body.dataset.lv=lv;
+  level=lv; lastLevel=lv; score=0; idx=0; hist=[]; document.body.dataset.lv=lv;
+  ansSec=0; missRow=0; lastAct=performance.now(); myRankId=null;
   qs=shuffle(QUIZ[lv].slice()).slice(0,10);
   $('hudLv').textContent=LEVELS[lv].toUpperCase();
-  sndSel(); nextQuestion(true);
+  sndStart(); nextQuestion(true);
 }
+function toStandby(msg){             // 待機画面（レベル選択）へ戻る
+  stopSpeech(); qHold=false; state='level'; show('sLevel'); updateHud();
+  if(msg) toast(msg);
+}
+const qSecOf = lv => Math.max(5, +settings.qsecs[lv] || Q_SECS[lv] || Q_SEC);
 function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]} return a; }
 function nextQuestion(first){
   dwell.clear(); screenAt=performance.now();
   if(!first) idx++;
   if(idx>=qs.length) return finish();
+  if(missRow>=MISS_LIMIT) return toStandby(MISS_LIMIT+'問続けて時間切れだったので、はじめに戻りました');
   state='question'; show('question');
   $('qNo').textContent=`Question ${idx+1} / ${qs.length}`;
   $('segs').innerHTML=qs.map((_,k)=>`<i class="${k<hist.length?(hist[k]?'ok':'ng'):k===idx?'cur':''}"></i>`).join('');
@@ -359,7 +486,9 @@ function updateHud(){ $('hudR').innerHTML = state==='level'?'':`SCORE<b>${score}
 
 function answer(a){
   if(state!=='question') return;
-  const q=qs[idx], ok = a===q.a;
+  const q=qs[idx], ok = a===q.a, now=performance.now(), qsec=qSecOf(level);
+  ansSec += a===null ? qsec : Math.min(qsec, (now-qStart)/1000);   // かかった時間＝回答までの時間の合計（読み上げ中は数えない）
+  missRow = a===null ? missRow+1 : 0; if(a!==null) lastAct=now;
   if(ok) score++; hist.push(ok); ok?sndOK():sndNG();
   state='reveal'; revealAt=performance.now(); dwell.clear(); screenAt=revealAt;
   const rv=$('reveal'); rv.className='on '+(ok?'ok':'ng');
@@ -373,13 +502,20 @@ function answer(a){
   say((ok?'正解です。':(a===null?'時間切れです。':'ざんねん。'))+`答えは${q.a==='O'?'まる':'ばつ'}です。`+q.e);
 }
 function finish(){
-  state='result'; show('sResult');
+  state='result'; show('sResult'); resultAt=performance.now();
   const best = saveBest(level, score);
   $('rsLevel').textContent=`RESULT ・ ${LEVELS[level]}`;
   $('score').innerHTML=`${score}<small>/ ${qs.length}</small>`;
   $('rsRank').textContent = level==='expert'&&score>=9 ? 'EVエンジニア級！' : score>=9?'EVマスター！':score>=7?'EV通！':score>=4?'EV見習い':'ここから伸びしろ！';
+  sndResult(score>=7);
   say(`結果は${qs.length}問中${score}問正解。`+$('rsRank').textContent);
-  $('rsBest').textContent=`このレベルのベスト: ${best} 点`;
+  // 記録（records.csv / ブラウザ内）に1行足して、本日のランキングで何位か出す
+  const no = todayAll().reduce((m,r)=>Math.max(m, +r['受付番号']||0), 0) + 1;
+  const rec = { '日時':stamp(new Date()), '受付番号':no, 'レベル':LEVELS[level], '正解数':score, '問題数':qs.length, 'かかった時間':ansSec.toFixed(1) };
+  addPlay(rec); myRankId=rowId(rec);
+  const list=ranking(), pos=list.findIndex(r=>rowId(r)===myRankId)+1;
+  $('rsToday').textContent = `本日 ${no} 人目の挑戦者 ・ 本日のランキング ${pos} 位（${list.length} 人中）・ 回答時間 ${rec['かかった時間']} 秒`;
+  $('rsBest').textContent=`このレベルのこれまでの最高: ${Math.max(best, bestFromRows(level))} 点`;
   $('hudR').textContent='';
 }
 function saveBest(lv,s){ let b=s; try{
@@ -397,7 +533,7 @@ function onButton(b){
   sndSel();
   if(b.dataset.lv) startGame(b.dataset.lv);
   else if(b.dataset.act==='retry') startGame(level);
-  else if(b.dataset.act==='levels'){ state='level'; show('sLevel'); updateHud(); }
+  else if(b.dataset.act==='levels') toStandby();
   else if(b.id==='btnNext') nextQuestion();
 }
 document.addEventListener('click', e=>{ const b=e.target.closest('.btn'); if(b && b.offsetParent!==null) onButton(b); });
@@ -412,7 +548,7 @@ function updateDwell(now){
     if(hit){
       if(!dwell.has(b)) dwell.set(b,now);
       const f=Math.min(1,(now-dwell.get(b))/DWELL_MS); b.style.setProperty('--p',f);
-      if(f>=1){ dwell.clear(); onButton(b); return; }
+      if(f>=1){ dwell.clear(); lastAct=now; onButton(b); return; }
     } else dwell.delete(b);
   }
 }
@@ -425,7 +561,17 @@ function update(now){
   const t=coverT(); cursors=[];
   if(lm) for(const i of [15,16]){ const p=lm[i]; if((p.visibility??1)>.4) cursors.push(toScreen(p,t)); }
 
+  if(settingsOpen()){ lastAct=now; document.querySelectorAll('.btn').forEach(b=>b.style.setProperty('--p',0)); dwell.clear(); return; }   // 設定中は手かざし・放置判定・回答を止める
   if(state==='level'||state==='result'||state==='reveal') updateDwell(now);
+  // 放置で待機画面へ戻る（人が映らず操作も無い時間が設定の秒数続いたら）
+  if(state==='question'||state==='reveal'){
+    if(now-Math.max(lastAct,lastBody) > settings.idleSec*1000) return toStandby('しばらく操作が無かったので、はじめに戻りました');
+  }
+  if(state==='result'){
+    const left=Math.ceil(settings.resultSec-(now-resultAt)/1000);
+    $('rsBack').textContent = `${Math.max(0,left)} 秒後にはじめの画面に戻ります`;
+    if(left<=0 && (!speaking() || left<-15)) return toStandby();   // 読み上げが終わらなくても 15 秒で戻る
+  }
   if(state==='reveal' && now-revealAt>REVEAL_MS && (!speaking() || now-revealAt>60000)) nextQuestion();
 
   if(state==='question'){
@@ -434,9 +580,10 @@ function update(now){
       else if(qSeen || now-qHoldAt>800){ qHold=false; qStart=now; }
       if(now-qHoldAt>12000) qHold=false;
     }
-    const qsec=Q_SECS[level]||Q_SEC, left=Math.max(0,qsec-(now-qStart)/1000);
+    const qsec=qSecOf(level), left=Math.max(0,qsec-(now-qStart)/1000);
     const bar=$('timer').firstElementChild; bar.style.width=(left/qsec*100)+'%';
     bar.style.background = left<4?'var(--ng)':'var(--lv)';
+    { const sec=Math.ceil(left); if(!qHold && sec<=5 && sec>=1 && sec!==lastTick){ lastTick=sec; sndTick(sec===1); } if(sec>5) lastTick=0; }
     if(left<=0) return answer(null);
     const cur=classify(lm, vw/vh);
     if(!armed){                       // 前の問題の姿勢が残らないよう、一度腕を下ろすまで待つ
@@ -480,9 +627,165 @@ function render(){
   }
 }
 
+/* ============ 記録と本日のランキング（records.js。エアハンドルと同じ方式） ============
+   1回遊び終わるごとに records.csv（設定で選んだフォルダ）に1行足す。フォルダが未設定・許可待ちでも、
+   ブラウザ内（evquiz_plays）には必ず残すので、本日のランキングは出る。 */
+const records = new Records();
+const PKEY='evquiz_plays', RKEY='evquiz_resetAt';
+let plays=[]; try{ plays=JSON.parse(localStorage.getItem(PKEY))||[]; }catch(e){}
+let resetAt=''; try{ resetAt=localStorage.getItem(RKEY)||''; }catch(e){}
+const pad2=n=>String(n).padStart(2,'0');
+const stamp=d=>`${d.toLocaleDateString('sv')} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+const today=()=>new Date().toLocaleDateString('sv');   // YYYY-MM-DD
+const rowId=r=>(r['日時']||'')+'#'+(r['受付番号']||'');
+const lvKey=name=>LV_ORDER.find(k=>LEVELS[k]===name);
+// 記録の元：フォルダ（records.csv。Safari などはブラウザ内）と、ブラウザ内の控え（plays）を合わせたもの（同じ行は1つにする）。
+// 許可待ちの間に遊んだ人も、フォルダが使えるようになってから記録した人も、両方数える
+function allRows(){
+  const seen=new Set(), out=[];
+  for(const r of (records.state==='ok' ? records.rows.concat(plays) : plays)){ const k=rowId(r); if(!seen.has(k)){ seen.add(k); out.push(r); } }
+  return out;
+}
+function todayAll(){ const d=today(); return allRows().filter(r=>(r['日時']||'').startsWith(d)); }   // 受付番号（その日の通し番号）用。リセットしても振り直さない
+function todayRows(){ return todayAll().filter(r=>!resetAt || r['日時']>resetAt); }
+// 並べ方：正解数が多い → レベルが難しい → 回答時間が短い
+function ranking(){
+  return todayRows().filter(r=>lvKey(r['レベル'])).slice().sort((a,b)=>
+    (+b['正解数']||0)-(+a['正解数']||0) || LV_ORDER.indexOf(lvKey(b['レベル']))-LV_ORDER.indexOf(lvKey(a['レベル'])) ||
+    (parseFloat(a['かかった時間'])||1e9)-(parseFloat(b['かかった時間'])||1e9));
+}
+function bestFromRows(lv){ let b=0; for(const r of allRows()) if(r['レベル']===LEVELS[lv]) b=Math.max(b, +r['正解数']||0); return b; }
+function bestOf(lv){ let b=0; try{ b=+localStorage.getItem('evquiz_best_'+lv)||0; }catch(e){} return Math.max(b, bestFromRows(lv)); }
+function addPlay(rec){
+  plays.push(Object.fromEntries(RECORD_COLS.map(c=>[c,String(rec[c]??'')]))); if(plays.length>3000) plays=plays.slice(-3000);
+  try{ localStorage.setItem(PKEY, JSON.stringify(plays)); }catch(e){}
+  if(records.state==='ok'){
+    records.append(rec).then(ok=>{ if(!ok) toast('記録フォルダに書けません（ブラウザ内にだけ残します）'); drawStats(); })
+      .catch(e=>{ toast('記録を保存できません: '+e.message); records.state='error'; records.error=e.message; drawStats(); });
+  } else if(records.state==='prompt') toast('記録フォルダが許可待ちです（ブラウザ内にだけ残します）');
+  drawStats();
+}
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const LV_COLOR={easy:'#12a56b',normal:'#d28a00',hard:'#e5533d',expert:'#8a52e0'};
+function renderBoard(){
+  const list=ranking().slice(0,5);
+  $('rankBox').innerHTML = list.length
+    ? '<table id="rankTbl">'+list.map((r,i)=>{ const k=lvKey(r['レベル']);
+        return `<tr class="${i===0?'top':''}"><td>${i+1}位</td><td><b>${esc(r['正解数'])}</b> / ${esc(r['問題数'])} 問</td><td><span class="lvTag" style="color:${LV_COLOR[k]}">${esc(r['レベル'])}</span></td><td>${esc(r['かかった時間'])} 秒</td><td style="color:var(--dim);font-size:.85em">${esc(r['受付番号'])}人目</td></tr>`; }).join('')+'</table>'
+    : '<div id="rankEmpty">まだ挑戦者がいません。最初の1人になろう！</div>';
+  $('bestLine').innerHTML = 'これまでの最高： '+LV_ORDER.map(k=>`${LEVELS[k]} <b>${bestOf(k)}</b>点`).join(' ・ ');
+}
+function drawStats(){
+  const n=todayRows().length;
+  const st={ none:'記録: 未設定', prompt:'記録: 許可待ち（画面をクリック）', ok:`記録: OK（${records.name}）`, error:'記録: 読めません' }[records.state];
+  $('stRec').textContent=st; $('stRec').className = records.state==='ok'?'ok':records.state==='none'?'':'ng';
+  $('stToday').textContent=`本日 ${n} 人`;
+  $('recName').textContent=records.name||'未設定';
+  $('recState').textContent={ none:'', prompt:'（許可待ち）', ok:`（${records.rows.length} 件）`, error:'（読めません: '+(records.error||'')+'）' }[records.state];
+  const per=LV_ORDER.map(k=>`${LEVELS[k]} ${todayRows().filter(r=>r['レベル']===LEVELS[k]).length}`).join('・');
+  $('statsDetail').textContent=`本日 ${n} 人（${per}）`+(resetAt?` ・ ${resetAt} にリセット`:'');
+  if(state==='level') renderBoard();
+}
+async function recordsGrant(){ if(records.state==='prompt' && await records.grant()) toast('記録フォルダを使います: '+records.name); drawStats(); }
+addEventListener('pointerdown', recordsGrant); addEventListener('keydown', recordsGrant);
+
+/* ============ 待機画面の見どころ（デモ。自動で切り替わる） ============ */
+let demoTimer=null, demoIdx=0;
+function demoShow(){
+  const slides=[...document.querySelectorAll('#demo .slide')], sl=slides[demoIdx%slides.length];
+  slides.forEach(x=>x.classList.toggle('on', x===sl));
+  let wait=6000;
+  if(sl.dataset.s==='q'){            // 例題：問題を出して、少しあとに答えを見せる
+    const pool=QUIZ.easy.concat(QUIZ.normal), q=pool[Math.floor(Math.random()*pool.length)];
+    $('demoQ').textContent='Q. '+q.q; const a=$('demoA'); a.classList.remove('on');
+    a.innerHTML=`答えは <span style="color:${q.a==='O'?'var(--ok)':'var(--ng)'};font-size:1.3em">${q.a==='O'?'○':'×'}</span>　<span style="font-weight:400;color:var(--sub)">${esc((q.e.match(/[^。]*。?/)||[''])[0])}</span>`;
+    setTimeout(()=>a.classList.add('on'), 3500); wait=10000;
+  }
+  demoIdx++; demoTimer=setTimeout(demoShow, wait);
+}
+function demoStart(){ demoStop(); demoShow(); }
+function demoStop(){ clearTimeout(demoTimer); demoTimer=null; }
+
+/* ============ スタッフ設定の画面 ============ */
+const settingsOpen=()=>$('settings').classList.contains('show');
+function toggleSettings(on){
+  const el=$('settings'); on = on===undefined ? !el.classList.contains('show') : on;
+  el.classList.toggle('show', on); if(on){ fillSettings(); drawStats(); } else if(document.activeElement) document.activeElement.blur();
+}
+function fillSettings(){
+  $('idleSec').value=settings.idleSec; $('resultSec').value=settings.resultSec;
+  LV_ORDER.forEach(k=>$('qs_'+k).value=qSecOf(k));
+  $('sound').checked=settings.sound; $('vol').value=settings.vol; $('volVal').textContent=settings.vol+'%';
+  $('ttsChk').checked=ttsOn; $('packSel').value=pack;
+}
+$('packSel').innerHTML=PACKS.map(([k,n])=>`<option value="${k}">${n}</option>`).join('');
+['idleSec','resultSec','vol','sound',...LV_ORDER.map(k=>'qs_'+k)].forEach(id=>$(id).addEventListener('change', ()=>{
+  settings.idleSec=Math.max(15, Math.min(600, parseInt($('idleSec').value)||DEF.idleSec));
+  settings.resultSec=Math.max(5, Math.min(300, parseInt($('resultSec').value)||DEF.resultSec));
+  LV_ORDER.forEach(k=>settings.qsecs[k]=Math.max(5, Math.min(120, parseInt($('qs_'+k).value)||Q_SECS[k])));
+  settings.sound=$('sound').checked; settings.vol=parseInt($('vol').value)||0;
+  saveSettings(); fillSettings(); sndSel();
+}));
+$('vol').addEventListener('input', ()=>{ $('volVal').textContent=$('vol').value+'%'; });
+$('ttsChk').addEventListener('change', ()=>{ if($('ttsChk').checked!==ttsOn) toggleTts(); });
+$('packSel').addEventListener('change', ()=>{ pack=$('packSel').value; try{ localStorage.setItem('evquiz_pack', pack); }catch(e){} say('こんにちは。この声で読み上げます。'); });
+$('setClose').addEventListener('click', ()=>toggleSettings(false));
+if(!records.supported) $('btnRecPick').textContent='（このブラウザはフォルダを選べません）';
+$('btnRecPick').addEventListener('click', async ()=>{
+  if(!records.supported){ toast('このブラウザはフォルダを選べません。「CSV を書き出す」を使ってください'); return; }
+  try{ await records.pick(); toast('記録フォルダ: '+records.name); }catch(e){ if(e.name!=='AbortError') toast('フォルダを使えません: '+e.message); }
+  drawStats();
+});
+$('btnRecLoad').addEventListener('click', async ()=>{
+  try{ if(records.state==='prompt') await records.grant(); else if(records.dir||records.local) await records.load(); }catch(e){ toast('記録を読めません: '+e.message); }
+  drawStats();
+});
+$('btnRecCsv').addEventListener('click', ()=>{
+  if(records.state==='ok') return records.download();
+  // フォルダが使えないときは、ブラウザ内の控えを書き出す
+  const tmp=new Records(); tmp.rows=plays; tmp.download();
+});
+$('btnReset').addEventListener('click', ()=>{
+  if(!confirm('本日の集計とランキングをリセットしますか？（records.csv とこれまでの最高は消えません）')) return;
+  resetAt=stamp(new Date()); try{ localStorage.setItem(RKEY, resetAt); }catch(e){}
+  drawStats(); renderBoard();
+});
+// ⚙：マウスはクリック、タッチ端末は長押し 1 秒で開く（お客さんが触って開かないように）
+{ const g=$('gear'); let tm=null, touch=false;
+  g.addEventListener('pointerdown', e=>{ e.stopPropagation(); touch = e.pointerType==='touch' || e.pointerType==='pen';
+    if(touch){ clearTimeout(tm); tm=setTimeout(()=>{ tm=null; toggleSettings(true); }, 1000); } });
+  const cancel=()=>{ clearTimeout(tm); tm=null; };
+  g.addEventListener('pointerup', cancel); g.addEventListener('pointerleave', cancel); g.addEventListener('pointercancel', cancel);
+  g.addEventListener('contextmenu', e=>e.preventDefault());
+  g.addEventListener('click', e=>{ e.stopPropagation(); g.blur(); if(!touch) toggleSettings(); });
+}
+
+/* ============ 全画面 ============
+   起動_全画面.bat / 起動_全画面_Mac.command で開いたとき（?fs=1）は、最初のクリック/キーで全画面にする（ブラウザの決まりで操作が必要）。
+   解除は Esc（ブラウザ標準）。もう一度全画面にするときは F キー。 */
+const wantFs = new URLSearchParams(location.search).has('fs');
+let fsDone=false;
+const fsEl=()=>document.fullscreenElement || document.webkitFullscreenElement;
+function enterFullscreen(){
+  const el=document.documentElement;
+  try{ const p=(el.requestFullscreen||el.webkitRequestFullscreen).call(el); if(p && p.catch) p.catch(e=>toast('全画面にできません: '+e.message)); }
+  catch(e){ toast('全画面にできません: '+e.message); }
+}
+function updateFsHint(){ $('fsHint').style.display = wantFs && !fsDone && !fsEl() ? 'block' : 'none'; }
+const autoFs=e=>{
+  if(!wantFs || fsDone || fsEl()) return;
+  if(e.type==='keydown' && ['Escape','f','F'].includes(e.key)) return;
+  fsDone=true; enterFullscreen();
+};
+addEventListener('pointerdown', autoFs); addEventListener('keydown', autoFs);
+const onFsChange=()=>{ if(fsEl()) fsDone=true; updateFsHint(); };
+document.addEventListener('fullscreenchange', onFsChange); document.addEventListener('webkitfullscreenchange', onFsChange);
+updateFsHint();
+
 /* ============ MediaPipe 起動 ============ */
 function onResults(res){
   lm = res.poseLandmarks||null;
+  if(lm && (lm[11].visibility??1)>.5 && (lm[12].visibility??1)>.5) lastBody=performance.now();   // 人が映っている
   vw=video.videoWidth||vw; vh=video.videoHeight||vh;
   if(!ready){ ready=true; $('status').style.display='none'; }
   else $('status').style.display = (!lm && state==='question')?'block':'none';
@@ -490,16 +793,20 @@ function onResults(res){
   render(); update(performance.now());
 }
 async function boot(){
+  if(location.protocol==='file:'){ $('fileMsg').style.display='flex'; $('status').style.display='none'; return; }
+  try{ await records.restore(); }catch(e){ toast('記録フォルダを読めません: '+e.message); }
+  renderBoard(); drawStats(); demoStart();
   try{
     const stream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1280},height:{ideal:720},facingMode:'user'},audio:false});
     video.srcObject=stream; await video.play(); vw=video.videoWidth; vh=video.videoHeight;
   }catch(e){ $('status').textContent='カメラが使えません（'+e.name+'）。キー操作（1-4, O, X）でも遊べます。'; startFallbackLoop(); return; }
-  if(typeof Pose==='undefined'){ $('status').textContent='AIモデルを読み込めません（インターネット接続を確認）。キー操作でも遊べます。'; startFallbackLoop(); return; }
-  const pose=new Pose({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${f}`});
+  if(typeof Pose==='undefined'){ $('status').textContent='AIモデルを読み込めません（lib/mediapipe_pose/ があるか確認）。キー操作でも遊べます。'; startFallbackLoop(); return; }
+  // MediaPipe Pose 0.5.1675469404 は lib/mediapipe_pose/ に同梱（ネットが無くても動く）
+  const pose=new Pose({locateFile:f=>`lib/mediapipe_pose/${f}`});
   pose.setOptions({modelComplexity:1,smoothLandmarks:true,minDetectionConfidence:.5,minTrackingConfidence:.5});
   pose.onResults(onResults);
   (async function loop(){
-    if(video.readyState>=2){ try{ await pose.send({image:video}); }catch(e){ $('status').textContent='AIモデルを読み込めません（インターネット接続を確認）。キー操作でも遊べます。'; $('status').style.display='block'; if(!running){running=true; startFallbackLoop();} return; } }
+    if(video.readyState>=2){ try{ await pose.send({image:video}); }catch(e){ $('status').textContent='AIモデルを読み込めません（lib/mediapipe_pose/ があるか確認）。キー操作でも遊べます。'; $('status').style.display='block'; if(!running){running=true; startFallbackLoop();} return; } }
     requestAnimationFrame(loop);
   })();
 }
@@ -510,19 +817,30 @@ function startFallbackLoop(){ running=true; $('status').style.display='block';
 addEventListener('keydown', e=>{
   if(e.repeat) return;
   const k=e.key.toLowerCase();
+  lastAct=performance.now();
+  if(settingsOpen()){            // 設定を開いている間はゲームのキーにしない（Esc で閉じる。入力欄の外なら S でも閉じる）
+    const typing=/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName);
+    if(k==='escape' || (k==='s' && !typing)){ e.preventDefault(); toggleSettings(false); }
+    return;
+  }
   if(k===' '||k==='enter') e.preventDefault();
-  if(k==='escape'){            // ESC: 途中でやめてレベル選択へ
-    if(state!=='level'){ stopSpeech(); qHold=false; state='level'; show('sLevel'); updateHud(); toast('中断しました'); }
+  if(k==='s'){ toggleSettings(); return; }
+  if(k==='f'){ enterFullscreen(); return; }
+  if(k==='escape'){            // ESC: 設定を閉じる／途中でやめてレベル選択へ
+    if($('settings').classList.contains('show')){ toggleSettings(false); return; }
+    if(state!=='level') toStandby('中断しました');
     return;
   }
   if(k==='v'){ nextVoice(); return; }
-  if(state==='level' && ['1','2','3','4'].includes(k)) startGame(['easy','normal','hard','expert'][+k-1]);
+  if(state==='level' && ['1','2','3','4'].includes(k)) startGame(LV_ORDER[+k-1]);
+  else if(state==='level' && k==='enter') startGame(lastLevel);
   else if(k==='m') toggleTts();
   else if(state==='question' && (k==='o'||k==='x')) answer(k.toUpperCase());
   else if(state==='reveal' && (k===' '||k==='enter')) nextQuestion();
   else if(state==='result' && k==='r') startGame(level);
-  else if(state==='result' && (k===' '||k==='enter')) { state='level'; show('sLevel'); }
+  else if(state==='result' && (k===' '||k==='enter')) toStandby();
 });
+addEventListener('pointerdown', ()=>{ lastAct=performance.now(); }, true);
 window.__classify=classify;
 boot();
 </script>
