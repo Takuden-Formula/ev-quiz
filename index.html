@@ -81,6 +81,10 @@
   #guide div{display:flex;align-items:center;gap:14px;border-radius:99px;padding:10px 24px 10px 12px;font-size:clamp(13px,1.4vw,17px);color:var(--sub)}
   #guide em{font-style:normal;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:26px;font-weight:800;border:2px solid}
   #guide .o em{color:var(--ok);border-color:var(--ok)} #guide .x em{color:var(--ng);border-color:var(--ng)}
+  #poseHint{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);z-index:4;display:none;padding:8px 20px;border-radius:99px;
+    font-size:clamp(14px,1.5vw,19px);font-weight:600;color:var(--fg);background:rgba(255,255,255,.85);border:1px solid var(--line);white-space:nowrap}
+  #poseDbg{position:fixed;right:16px;top:70px;z-index:11;display:none;font:12px/1.5 Consolas,monospace;background:rgba(255,255,255,.88);
+    border:1px solid var(--line);border-radius:10px;padding:8px 12px;white-space:pre;color:var(--fg)}
   #ring{position:fixed;left:50%;top:56%;width:180px;height:180px;margin:-90px 0 0 -90px;z-index:5;display:none;pointer-events:none}
   #ring .m{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:92px;font-weight:300}
 
@@ -204,9 +208,11 @@
   <div class="q" id="qText"></div>
 </div>
 <div id="guide">
-  <div class="glass"><em>○</em>両手を頭の上でくっつける</div>
+  <div class="glass"><em>○</em>両手を頭の上で輪にする</div>
   <div class="glass"><em>×</em>両腕を胸の前でクロスする</div>
 </div>
+<div id="poseHint"></div>
+<div id="poseDbg"></div>
 <div id="ring"><svg viewBox="0 0 200 200" width="180" height="180">
   <circle cx="100" cy="100" r="88" fill="rgba(255,255,255,.85)" stroke="rgba(20,40,70,.15)" stroke-width="6"/>
   <circle id="ringArc" cx="100" cy="100" r="88" fill="none" stroke="#1e8fe0" stroke-width="6" stroke-linecap="round"
@@ -274,7 +280,8 @@
 <script>
 "use strict";
 /* ============ 設定 ============ */
-const HOLD_MS   = 1200;   // 同じポーズを保持して確定するまで
+const HOLD_MS   = 1000;   // 同じポーズを保持して確定するまで
+const GRACE_MS  = 350;    // ポーズ保持中、判定が一瞬外れても続けて数える時間
 const Q_SEC     = 20;     // 1問の制限時間
 const REVEAL_MS = 6000;   // 正解表示の自動送り
 const DWELL_MS  = 1000;   // ボタンに手をかざす時間
@@ -295,22 +302,57 @@ function saveSettings(){ try{ localStorage.setItem(SKEY, JSON.stringify(settings
    lm: MediaPipe Pose の 33 点（x,y は 0-1 の正規化座標）, asp: 映像の 幅/高さ
    返り値: 'O' | 'X' | null                                          */
 function classify(lm, asp){
-  if(!lm) return null;
+  return classifyInfo(lm, asp).label;
+}
+// 判定の中身（D キーの表示用に途中の値も返す）。長さはすべて肩幅 sw を 1 とした値
+// 前の版は「手首どうしが肩幅の 0.6 以内（○）」「手首が肩幅の半分以上すれ違う（×）」と厳しく、
+// 指先だけ合わせた○や、手首のあたりで交差させた×が通らなかった。手首・指先・ひじを組み合わせて見る
+function classifyInfo(lm, asp){
+  const out={label:null, why:'人が映っていない'};
+  if(!lm) return out;
   const P = i => ({x: lm[i].x*asp, y: lm[i].y, v: lm[i].visibility ?? 1});
-  const n=P(0), ls=P(11), rs=P(12), lw=P(15), rw=P(16);
-  if([n,ls,rs,lw,rw].some(p => p.v < 0.4)) return null;
-  const sw = Math.abs(ls.x-rs.x);               // 肩幅（スケール基準）
-  if(sw < 0.04) return null;
-  const wd = Math.abs(lw.x-rw.x);               // 手首どうしの距離
-  // ○ : 両手首が鼻より上で、くっついている（頭上で輪をつくる）
-  const shy=(ls.y+rs.y)/2;
-  if(lw.y < n.y && rw.y < n.y && lw.y < shy-0.5*sw && rw.y < shy-0.5*sw && wd < 0.6*sw) return 'O';
-  // × : 腕が交差（左右の手首の順序が肩と逆）して胸の前にある
-  const sh = (ls.y+rs.y)/2, xmin=Math.min(ls.x,rs.x), xmax=Math.max(ls.x,rs.x);
-  const crossed = (lw.x-rw.x)*(ls.x-rs.x) < 0 && wd > 0.5*sw;
-  const inChest = [lw,rw].every(w => w.y > sh-0.2*sw && w.y < sh+1.0*sw && w.x > xmin-0.6*sw && w.x < xmax+0.6*sw);
-  if(crossed && inChest) return 'X';
-  return null;
+  const ls=P(11), rs=P(12);
+  if(ls.v < 0.5 || rs.v < 0.5){ out.why='両肩が映っていない'; return out; }
+  const sw = Math.hypot(ls.x-rs.x, ls.y-rs.y);  // 肩幅（スケール基準。体が少し斜めでも縮みにくいよう2次元の距離）
+  if(sw < 0.04){ out.why='遠すぎる'; return out; }
+  const mid=(ls.x+rs.x)/2, shy=(ls.y+rs.y)/2, side=Math.sign(ls.x-rs.x)||1;
+  const lw=P(15), rw=P(16), le=P(13), re=P(14);
+  if(lw.v < 0.3 || rw.v < 0.3){ out.why='手首が見えない'; return out; }
+  const D=(a,b)=>Math.hypot(a.x-b.x, a.y-b.y)/sw;
+  // 手先：人さし指・小指が見えていれば手首より先の点も使う（輪をつくると手首は離れていても指先は付く）
+  const tip=(w,a,b)=>{ const f=[P(a),P(b)].filter(p=>p.v>=0.3); if(!f.length) return w;
+    return {x:f.reduce((s,p)=>s+p.x,0)/f.length, y:f.reduce((s,p)=>s+p.y,0)/f.length}; };
+  const lt=tip(lw,17,19), rt=tip(rw,18,20);
+  const nose=P(0), headY = nose.v>=0.4 ? nose.y : shy-0.6*sw;   // 腕で顔が隠れても肩から頭の高さを推定
+  const wd=D(lw,rw), td=D(lt,rt);
+  const up=w=>(shy-w.y)/sw;                     // 肩より何肩幅ぶん上か
+  Object.assign(out,{wd:+wd.toFixed(2), td:+td.toFixed(2), upL:+up(lw).toFixed(2), upR:+up(rw).toFixed(2)});
+
+  // ○ : 両手が頭の高さより上で、頭の上（体の中心付近）で近づいている
+  const elbowsUp = [le,re].every(e=>e.v<0.3 || e.y < shy+0.15*sw);
+  const handsHigh = [lw,rw].every(w=>w.y < headY) || ([lw,rw].every(w=>up(w)>0.45) && elbowsUp);
+  const overHead = Math.abs((lw.x+rw.x)/2-mid) < 0.9*sw;
+  if(handsHigh && overHead && (wd < 1.15 || td < 0.75)){ out.label='O'; out.why='○ 頭の上で手が近い'; return out; }
+  if(handsHigh){ out.why = overHead ? '○まであと少し：両手をもっと近づける' : '○まであと少し：手を頭の真上に'; return out; }
+
+  // × : 両手が胸の高さにあり、前腕が交差している
+  const inBand = [lw,rw].every(w=>up(w) < 0.7 && up(w) > -1.3 && Math.abs(w.x-mid) < 1.2*sw);
+  // ひじが見えていれば「腕を下ろしているだけ」（手首がひじより大きく下）を除く
+  const bent = [[lw,le],[rw,re]].every(([w,e])=>e.v<0.3 || w.y < e.y+0.35*sw);
+  if(!inBand || !bent){ out.why = inBand ? '×まであと少し：腕を胸の前で曲げる' : ''; return out; }
+  const dx=w=>(w.x-mid)*side/sw;                // 体の中心から、その人の左側をプラスにした横位置（肩幅単位）
+  // (a) 左右の手首が中心をはさんで入れ替わっている
+  const swapped = dx(lw) < -0.1 && dx(rw) > 0.1;
+  // (b) ひじ→手先（少し先まで延ばす）の線分どうしが交わる
+  const ext=(e,w,t)=>({x:w.x+(t.x-w.x)*1.5+(w.x-e.x)*0.15, y:w.y+(t.y-w.y)*1.5+(w.y-e.y)*0.15});
+  const cross=(a,b,c,d)=>{ const o=(p,q,r)=>(q.x-p.x)*(r.y-p.y)-(q.y-p.y)*(r.x-p.x);
+    return o(a,b,c)*o(a,b,d) < 0 && o(c,d,a)*o(c,d,b) < 0; };
+  const forearms = le.v>=0.3 && re.v>=0.3 && cross(le, ext(le,lw,lt), re, ext(re,rw,rt));
+  // (c) 交差すると AI が左右の手首を取り違えることがある → 両手が中心に寄り、どちらもひじより内側
+  const inward = le.v>=0.3 && re.v>=0.3 && wd < 0.9 && [[lw,le],[rw,re]].every(([w,e])=>Math.abs(w.x-mid) < 0.55*sw && Math.abs(w.x-mid) < Math.abs(e.x-mid)-0.1*sw);
+  if(swapped || forearms || inward){ out.label='X'; out.why='× '+(swapped?'手首が入れ替わっている':forearms?'前腕が交差':'両手が胸の中心'); return out; }
+  out.why='×まであと少し：腕をしっかりクロス';
+  return out;
 }
 
 /* ============ 状態 ============ */
@@ -449,6 +491,7 @@ function show(which){
   const q = which==='question';
   $('qpanel').style.display = q?'block':'none';
   $('guide').style.display  = q?'flex':'none';
+  if(!q) $('poseHint').style.display='none';
   $('timer').style.display  = q?'block':'none';
   $('hudLv').style.display  = (which==='sLevel')?'none':'inline-block';
   $('hudR').style.visibility = (which==='sLevel')?'hidden':'visible';
@@ -585,16 +628,28 @@ function update(now){
     bar.style.background = left<4?'var(--ng)':'var(--lv)';
     { const sec=Math.ceil(left); if(!qHold && sec<=5 && sec>=1 && sec!==lastTick){ lastTick=sec; sndTick(sec===1); } if(sec>5) lastTick=0; }
     if(left<=0) return answer(null);
-    const cur=classify(lm, vw/vh);
+    const info=classifyInfo(lm, vw/vh), cur=info.label;
+    showPoseInfo(info, now);
     if(!armed){                       // 前の問題の姿勢が残らないよう、一度腕を下ろすまで待つ
       if(cur===null){ if(!neutralSince) neutralSince=now; if(now-neutralSince>500) armed=true; }
       else neutralSince=0;
     } else if(cur && cur===holdLabel){
       lostAt=now; const f=Math.min(1,(now-holdStart)/HOLD_MS); drawRing(cur,f);
       if(f>=1) return answer(cur);
-    } else if(holdLabel && now-lostAt<150){ /* 一瞬の揺れは猶予 */ }
+    } else if(holdLabel && now-lostAt<GRACE_MS){ /* 一瞬の揺れは猶予 */ }
     else { holdLabel=cur; holdStart=now; drawRing(null,0); }
   }
+}
+// 「あと少し」の案内（同じ案内が 0.6 秒続いたら出す）と、スタッフ用の判定表示（D キー）
+let hintTxt='', hintSince=0, poseDbgOn=false;
+function showPoseInfo(info, now){
+  const t = (armed && !info.label && /あと少し/.test(info.why)) ? info.why.replace(/^.まであと少し：/, m=>m.replace('：',' → ')) : '';
+  if(t!==hintTxt){ hintTxt=t; hintSince=now; }
+  const h=$('poseHint'); h.style.display = (hintTxt && now-hintSince>600) ? 'block' : 'none'; h.textContent=hintTxt;
+  if(poseDbgOn) $('poseDbg').textContent = `判定: ${info.label||'-'}  ${info.why||''}
+手首の距離 ${info.wd??'-'}  指先 ${info.td??'-'}
+肩からの高さ 左 ${info.upL??'-'} / 右 ${info.upR??'-'}
+（肩幅 = 1）`;
 }
 function drawRing(label,f){
   const r=$('ring'); r.style.display=label?'block':'none';
@@ -826,6 +881,7 @@ addEventListener('keydown', e=>{
   if(k===' '||k==='enter') e.preventDefault();
   if(k==='s'){ toggleSettings(); return; }
   if(k==='f'){ enterFullscreen(); return; }
+  if(k==='d'){ poseDbgOn=!poseDbgOn; $('poseDbg').style.display=poseDbgOn?'block':'none'; return; }
   if(k==='escape'){            // ESC: 設定を閉じる／途中でやめてレベル選択へ
     if($('settings').classList.contains('show')){ toggleSettings(false); return; }
     if(state!=='level') toStandby('中断しました');
@@ -841,7 +897,7 @@ addEventListener('keydown', e=>{
   else if(state==='result' && (k===' '||k==='enter')) toStandby();
 });
 addEventListener('pointerdown', ()=>{ lastAct=performance.now(); }, true);
-window.__classify=classify;
+window.__classify=classify; window.__classifyInfo=classifyInfo;
 boot();
 </script>
 </body>
