@@ -1,7 +1,7 @@
 *.command text eol=lf
 *.sh text eol=lf
 *.pl text eol=lf
-*.bat text eol=crlf
+*.bat -text
 *.mp3 binary
 *.wasm binary
 *.data binary
