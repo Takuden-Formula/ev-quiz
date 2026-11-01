@@ -30,9 +30,10 @@
   #hud .right{display:flex;align-items:center;gap:16px}
   #hudR{font-size:14px;color:var(--sub);letter-spacing:.08em;font-variant-numeric:tabular-nums;text-align:right}
   #hudR b{color:var(--fg);font-size:22px;margin-left:6px}
-  #ttsBtn{font:inherit;font-size:12px;letter-spacing:.1em;color:var(--fg);background:rgba(255,255,255,.75);border:1px solid var(--line);border-radius:99px;padding:6px 14px;cursor:pointer}
+  #ttsBtn,#fsBtn{font:inherit;font-size:12px;letter-spacing:.1em;color:var(--fg);background:rgba(255,255,255,.75);border:1px solid var(--line);border-radius:99px;padding:6px 14px;cursor:pointer}
   #ttsBtn.off{color:var(--dim)}
-  #ttsBtn:hover{border-color:var(--acc)}
+  #ttsBtn:hover,#fsBtn:hover{border-color:var(--acc)}
+  #fsBtn[hidden]{display:none}
   #timer{position:fixed;top:0;left:0;right:0;height:4px;z-index:7;display:none;background:rgba(20,40,70,.1)}
   #timer i{display:block;height:100%;width:100%;background:var(--lv);box-shadow:0 0 14px var(--lv);transition:background .3s}
 
@@ -166,7 +167,7 @@
 <div id="vig"></div>
 <video id="cam" playsinline muted style="display:none"></video>
 
-<div id="hud"><span class="brand"><i></i>EV QUIZ</span><span id="hudLv" style="display:none"></span><span class="right"><span id="hudR"></span><button id="ttsBtn" title="M キーでも切替"></button><button id="gear" title="設定（S キー。タッチ端末は長押し1秒）">⚙</button></span></div>
+<div id="hud"><span class="brand"><i></i>EV QUIZ</span><span id="hudLv" style="display:none"></span><span class="right"><span id="hudR"></span><button id="ttsBtn" title="M キーでも切替"></button><button id="fsBtn" title="F キーでも全画面"></button><button id="gear" title="設定（S キー。タッチ端末は長押し1秒）">⚙</button></span></div>
 <div id="timer"><i></i></div>
 <div id="status" class="glass">カメラとAIモデルを準備中…</div>
 <div class="hint">KEYS　1-4 レベル / Enter 開始 / O ○ / X × / Space 次へ / R もう一度 / M 読み上げ / V 声の切替 / S 設定 / F 全画面 / ESC 中断</div>
@@ -828,7 +829,7 @@ function enterFullscreen(){
 }
 function updateFsHint(){ $('fsHint').style.display = wantFs && !fsDone && !fsEl() ? 'block' : 'none'; }
 const autoFs=e=>{
-  if(!wantFs || fsDone || fsEl()) return;
+  if(!wantFs || fsDone || fsEl() || (e.target.closest && e.target.closest('#fsBtn'))) return;
   if(e.type==='keydown' && ['Escape','f','F'].includes(e.key)) return;
   fsDone=true; enterFullscreen();
 };
@@ -836,6 +837,13 @@ addEventListener('pointerdown', autoFs); addEventListener('keydown', autoFs);
 const onFsChange=()=>{ if(fsEl()) fsDone=true; updateFsHint(); };
 document.addEventListener('fullscreenchange', onFsChange); document.addEventListener('webkitfullscreenchange', onFsChange);
 updateFsHint();
+function exitFullscreen() { const fn = document.exitFullscreen || document.webkitExitFullscreen; if (fn) fn.call(document); }
+// 全画面ボタン：押すたびに全画面 ⇔ 元に戻す。全画面にできないブラウザ（iPhone の Safari など）では出さない
+const fsOK = !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen);
+function updateFsBtn() { const b = $('fsBtn'); b.hidden = !fsOK; b.textContent = fsEl() ? '全画面をやめる' : '⛶ 全画面'; }
+$('fsBtn').addEventListener('click', e => { e.stopPropagation(); e.currentTarget.blur(); fsDone = true; if (fsEl()) exitFullscreen(); else enterFullscreen(); });
+document.addEventListener('fullscreenchange', updateFsBtn); document.addEventListener('webkitfullscreenchange', updateFsBtn);
+updateFsBtn();
 
 /* ============ MediaPipe 起動 ============ */
 function onResults(res){
