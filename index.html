@@ -191,12 +191,12 @@
     <div class="glass" id="demo"><h3>見どころ</h3>
       <div class="slide" data-s="o"><svg class="fig" viewBox="0 0 120 150"><circle class="h" cx="60" cy="30" r="13"/><line x1="60" y1="43" x2="60" y2="100"/><line x1="40" y1="52" x2="80" y2="52"/><line x1="60" y1="100" x2="45" y2="142"/><line x1="60" y1="100" x2="75" y2="142"/>
         <g class="down"><path d="M40 52 L34 78 L36 100"/><path d="M80 52 L86 78 L84 100"/><circle class="w" cx="36" cy="100" r="6"/><circle class="w" cx="84" cy="100" r="6"/></g>
-        <g class="up"><path d="M40 52 L26 26 L55 6"/><path d="M80 52 L94 26 L65 6"/><circle class="w" cx="56" cy="6" r="6"/><circle class="w" cx="64" cy="6" r="6"/></g></svg>
-        <div class="txt">答えが <b style="color:var(--ok)">○</b> だと思ったら<br><b>両手を頭の上でくっつける</b><br><small style="color:var(--sub)">そのまま約1秒キープで決定</small></div></div>
+        <g class="up"><path d="M40 52 L34 26 L32 4"/><path d="M80 52 L86 78 L84 100"/><circle class="w" cx="32" cy="4" r="6"/><circle class="w" cx="84" cy="100" r="6"/></g></svg>
+        <div class="txt">答えが <b style="color:var(--ok)">○</b> だと思ったら<br><b>左手をまっすぐ上げる</b><br><small style="color:var(--sub)">画面で左側の手。右手は下ろしたまま約1秒キープ</small></div></div>
       <div class="slide" data-s="x"><svg class="fig" viewBox="0 0 120 150"><circle class="h" cx="60" cy="30" r="13"/><line x1="60" y1="43" x2="60" y2="100"/><line x1="40" y1="52" x2="80" y2="52"/><line x1="60" y1="100" x2="45" y2="142"/><line x1="60" y1="100" x2="75" y2="142"/>
         <g class="down"><path d="M40 52 L34 78 L36 100"/><path d="M80 52 L86 78 L84 100"/><circle class="w" cx="36" cy="100" r="6"/><circle class="w" cx="84" cy="100" r="6"/></g>
-        <g class="up"><path d="M40 52 L46 78 L84 60"/><path d="M80 52 L74 78 L36 60"/><circle class="w" cx="84" cy="60" r="6"/><circle class="w" cx="36" cy="60" r="6"/></g></svg>
-        <div class="txt">答えが <b style="color:var(--ng)">×</b> だと思ったら<br><b>両腕を胸の前でクロスする</b><br><small style="color:var(--sub)">そのまま約1秒キープで決定</small></div></div>
+        <g class="up"><path d="M40 52 L34 78 L36 100"/><path d="M80 52 L86 26 L88 4"/><circle class="w" cx="36" cy="100" r="6"/><circle class="w" cx="88" cy="4" r="6"/></g></svg>
+        <div class="txt">答えが <b style="color:var(--ng)">×</b> だと思ったら<br><b>右手をまっすぐ上げる</b><br><small style="color:var(--sub)">画面で右側の手。左手は下ろしたまま約1秒キープ</small></div></div>
       <div class="slide" data-s="q"><div class="txt"><small style="color:var(--sub)">たとえば、こんな問題</small><div id="demoQ" style="font-weight:600"></div><div class="ans" id="demoA"></div></div></div>
       <div class="slide" data-s="info"><div class="txt"><b>4つのレベル・全101問</b><br>10問をランダムに出題。答えたあとに<b>解説</b>を読み上げます。<br><small style="color:var(--sub)">いちばん難しい「エキスパート」は1問12秒！</small></div></div>
     </div>
@@ -209,8 +209,8 @@
   <div class="q" id="qText"></div>
 </div>
 <div id="guide">
-  <div class="glass"><em>○</em>両手を頭の上で輪にする</div>
-  <div class="glass"><em>×</em>両腕を胸の前でクロスする</div>
+  <div class="glass o"><em>○</em>左手を上げる</div>
+  <div class="glass x"><em>×</em>右手を上げる</div>
 </div>
 <div id="poseHint"></div>
 <div id="poseDbg"></div>
@@ -306,8 +306,9 @@ function classify(lm, asp){
   return classifyInfo(lm, asp).label;
 }
 // 判定の中身（D キーの表示用に途中の値も返す）。長さはすべて肩幅 sw を 1 とした値
-// 前の版は「手首どうしが肩幅の 0.6 以内（○）」「手首が肩幅の半分以上すれ違う（×）」と厳しく、
-// 指先だけ合わせた○や、手首のあたりで交差させた×が通らなかった。手首・指先・ひじを組み合わせて見る
+// 前の版（両手で輪＝○・胸の前でクロス＝×）は、交差で AI が左右の手首を取り違えたり、輪の手が近いかどうかで
+// 迷ったりして判定が不安定だった。いまは「左手だけ上げる＝○」「右手だけ上げる＝×」の 2 つだけを見る
+// （左右はプレイヤー本人から見た向き。画面は鏡のように左右反転しているので、画面でも左の手が○）
 function classifyInfo(lm, asp){
   const out={label:null, why:'人が映っていない'};
   if(!lm) return out;
@@ -316,43 +317,26 @@ function classifyInfo(lm, asp){
   if(ls.v < 0.5 || rs.v < 0.5){ out.why='両肩が映っていない'; return out; }
   const sw = Math.hypot(ls.x-rs.x, ls.y-rs.y);  // 肩幅（スケール基準。体が少し斜めでも縮みにくいよう2次元の距離）
   if(sw < 0.04){ out.why='遠すぎる'; return out; }
-  const mid=(ls.x+rs.x)/2, shy=(ls.y+rs.y)/2, side=Math.sign(ls.x-rs.x)||1;
-  const lw=P(15), rw=P(16), le=P(13), re=P(14);
-  if(lw.v < 0.3 || rw.v < 0.3){ out.why='手首が見えない'; return out; }
-  const D=(a,b)=>Math.hypot(a.x-b.x, a.y-b.y)/sw;
-  // 手先：人さし指・小指が見えていれば手首より先の点も使う（輪をつくると手首は離れていても指先は付く）
-  const tip=(w,a,b)=>{ const f=[P(a),P(b)].filter(p=>p.v>=0.3); if(!f.length) return w;
-    return {x:f.reduce((s,p)=>s+p.x,0)/f.length, y:f.reduce((s,p)=>s+p.y,0)/f.length}; };
-  const lt=tip(lw,17,19), rt=tip(rw,18,20);
-  const nose=P(0), headY = nose.v>=0.4 ? nose.y : shy-0.6*sw;   // 腕で顔が隠れても肩から頭の高さを推定
-  const wd=D(lw,rw), td=D(lt,rt);
-  const up=w=>(shy-w.y)/sw;                     // 肩より何肩幅ぶん上か
-  Object.assign(out,{wd:+wd.toFixed(2), td:+td.toFixed(2), upL:+up(lw).toFixed(2), upR:+up(rw).toFixed(2)});
-
-  // ○ : 両手が頭の高さより上で、頭の上（体の中心付近）で近づいている
-  const elbowsUp = [le,re].every(e=>e.v<0.3 || e.y < shy+0.15*sw);
-  const handsHigh = [lw,rw].every(w=>w.y < headY) || ([lw,rw].every(w=>up(w)>0.45) && elbowsUp);
-  const overHead = Math.abs((lw.x+rw.x)/2-mid) < 0.9*sw;
-  if(handsHigh && overHead && (wd < 1.15 || td < 0.75)){ out.label='O'; out.why='○ 頭の上で手が近い'; return out; }
-  if(handsHigh){ out.why = overHead ? '○まであと少し：両手をもっと近づける' : '○まであと少し：手を頭の真上に'; return out; }
-
-  // × : 両手が胸の高さにあり、前腕が交差している
-  const inBand = [lw,rw].every(w=>up(w) < 0.7 && up(w) > -1.3 && Math.abs(w.x-mid) < 1.2*sw);
-  // ひじが見えていれば「腕を下ろしているだけ」（手首がひじより大きく下）を除く
-  const bent = [[lw,le],[rw,re]].every(([w,e])=>e.v<0.3 || w.y < e.y+0.35*sw);
-  if(!inBand || !bent){ out.why = inBand ? '×まであと少し：腕を胸の前で曲げる' : ''; return out; }
-  const dx=w=>(w.x-mid)*side/sw;                // 体の中心から、その人の左側をプラスにした横位置（肩幅単位）
-  // (a) 左右の手首が中心をはさんで入れ替わっている
-  const swapped = dx(lw) < -0.1 && dx(rw) > 0.1;
-  // (b) ひじ→手先（少し先まで延ばす）の線分どうしが交わる
-  const ext=(e,w,t)=>({x:w.x+(t.x-w.x)*1.5+(w.x-e.x)*0.15, y:w.y+(t.y-w.y)*1.5+(w.y-e.y)*0.15});
-  const cross=(a,b,c,d)=>{ const o=(p,q,r)=>(q.x-p.x)*(r.y-p.y)-(q.y-p.y)*(r.x-p.x);
-    return o(a,b,c)*o(a,b,d) < 0 && o(c,d,a)*o(c,d,b) < 0; };
-  const forearms = le.v>=0.3 && re.v>=0.3 && cross(le, ext(le,lw,lt), re, ext(re,rw,rt));
-  // (c) 交差すると AI が左右の手首を取り違えることがある → 両手が中心に寄り、どちらもひじより内側
-  const inward = le.v>=0.3 && re.v>=0.3 && wd < 0.9 && [[lw,le],[rw,re]].every(([w,e])=>Math.abs(w.x-mid) < 0.55*sw && Math.abs(w.x-mid) < Math.abs(e.x-mid)-0.1*sw);
-  if(swapped || forearms || inward){ out.label='X'; out.why='× '+(swapped?'手首が入れ替わっている':forearms?'前腕が交差':'両手が胸の中心'); return out; }
-  out.why='×まであと少し：腕をしっかりクロス';
+  const shy=(ls.y+rs.y)/2;
+  const up=p=>(shy-p.y)/sw;                     // 肩より何肩幅ぶん上か
+  // 腕の高さ：手首が見えれば手首、見えなければ（画面の上にはみ出したときなど）ひじから推定
+  const arm=(wi,ei)=>{ const w=P(wi), e=P(ei);
+    if(w.v>=0.3) return up(w);
+    if(e.v>=0.3) return up(e)>0.2 ? up(e)+0.6 : up(e);   // ひじが肩より上 → 手はさらに上にある
+    return -1;                                          // 腕がまるごと見えない → 下ろしている扱い
+  };
+  const hl=arm(15,13), hr=arm(16,14);
+  Object.assign(out,{upL:+hl.toFixed(2), upR:+hr.toFixed(2)});
+  const UP=0.5, DOWN=0.15;                      // 上げた手：肩より 0.5 以上上 / 下ろした手：肩より 0.15 未満
+  const lUp=hl>UP, rUp=hr>UP, lDown=hl<DOWN, rDown=hr<DOWN;
+  if(lUp && rDown){ out.label='O'; out.why='○ 左手が上がっている'; return out; }
+  if(rUp && lDown){ out.label='X'; out.why='× 右手が上がっている'; return out; }
+  if(lUp && rUp){ out.why='片手だけ：○は左手、×は右手を上げる'; out.hint=out.why; return out; }
+  if(lUp){ out.why='○まであと少し：右手を下ろす'; out.hint='○ → 右手を下ろす'; return out; }
+  if(rUp){ out.why='×まであと少し：左手を下ろす'; out.hint='× → 左手を下ろす'; return out; }
+  if(hl>DOWN && rDown){ out.why='○まであと少し：左手をもっと高く'; out.hint='○ → 左手をもっと高く'; return out; }
+  if(hr>DOWN && lDown){ out.why='×まであと少し：右手をもっと高く'; out.hint='× → 右手をもっと高く'; return out; }
+  out.why='手を下ろしている';
   return out;
 }
 
@@ -644,13 +628,12 @@ function update(now){
 // 「あと少し」の案内（同じ案内が 0.6 秒続いたら出す）と、スタッフ用の判定表示（D キー）
 let hintTxt='', hintSince=0, poseDbgOn=false;
 function showPoseInfo(info, now){
-  const t = (armed && !info.label && /あと少し/.test(info.why)) ? info.why.replace(/^.まであと少し：/, m=>m.replace('：',' → ')) : '';
+  const t = (armed && !info.label && info.hint) ? info.hint : '';
   if(t!==hintTxt){ hintTxt=t; hintSince=now; }
   const h=$('poseHint'); h.style.display = (hintTxt && now-hintSince>600) ? 'block' : 'none'; h.textContent=hintTxt;
   if(poseDbgOn) $('poseDbg').textContent = `判定: ${info.label||'-'}  ${info.why||''}
-手首の距離 ${info.wd??'-'}  指先 ${info.td??'-'}
-肩からの高さ 左 ${info.upL??'-'} / 右 ${info.upR??'-'}
-（肩幅 = 1）`;
+手の肩からの高さ 左 ${info.upL??'-'} / 右 ${info.upR??'-'}
+（肩幅 = 1。○: 左 0.5 より上・右 0.15 より下 / ×: その逆）`;
 }
 function drawRing(label,f){
   const r=$('ring'); r.style.display=label?'block':'none';

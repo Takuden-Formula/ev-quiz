@@ -1,4 +1,4 @@
-// classify() の確認：作ったポーズ（肩幅を 1 とした座標）で ○ / × / なし が合うか、ゆらぎに強いかを見る。
+// classify() の確認：作ったポーズ（肩幅を 1 とした座標。+x がその人の左）で ○（左手を上げる）/ ×（右手を上げる）/ なし が合うか、ゆらぎに強いかを見る。
 // 使い方: node tests/pose_test.js   （index.html から classify を取り出して動かす）
 const fs=require('fs'); const src=fs.readFileSync(process.argv[2]||require('path').join(__dirname,'..','index.html'),'utf8');
 const a=src.indexOf('function classify(lm, asp){'), b=src.indexOf('/* ============ 状態');
@@ -8,24 +8,25 @@ function make(p, mir=1){ // p: {le,lw,re,rw,lt,rt,nose} in body units, person-le
   const lm=Array.from({length:33},()=>({x:.5,y:.9,visibility:0.1}));
   const put=(i,[bx,by],v=0.95)=>{ lm[i]={x:(cx+bx*S*mir)/asp, y:cy+by*S, visibility:v}; };
   put(11,[0.5,0]); put(12,[-0.5,0]); put(0,p.nose||[0,-0.6],p.noseV??0.95);
-  put(13,p.le,p.eV??.9); put(14,p.re,p.eV??.9); put(15,p.lw,p.wV??.9); put(16,p.rw,p.wV??.9);
+  put(13,p.le,p.leV??p.eV??.9); put(14,p.re,p.reV??p.eV??.9); put(15,p.lw,p.lwV??p.wV??.9); put(16,p.rw,p.rwV??p.wV??.9);
   if(p.lt){ put(19,p.lt,.8); put(17,p.lt,.8); } if(p.rt){ put(20,p.rt,.8); put(18,p.rt,.8); }
   return lm; }
 const sym=(e,w,t)=>({le:e,re:[-e[0],e[1]],lw:w,rw:[-w[0],w[1]],...(t?{lt:t,rt:[-t[0],t[1]]}:{})});
 const cases=[
  ['neutral',null,sym([0.6,0.9],[0.6,1.8])],
- ['O wrists touch','O',sym([0.9,-0.9],[0.15,-1.6],[0.05,-1.7])],
- ['O fingertips only','O',sym([0.95,-0.7],[0.5,-1.5],[0.08,-1.75])],
- ['O hands on head','O',sym([0.95,-0.5],[0.35,-0.9])],
- ['O face hidden','O',{...sym([0.9,-0.9],[0.2,-1.6]),noseV:0.2}],
- ['banzai wide',null,sym([0.8,-0.8],[1.0,-1.7])],
- ['X swapped wrists','X',{le:[0.75,0.7],lw:[-0.15,0.2],re:[-0.75,0.7],rw:[0.15,0.25]}],
- ['X big cross','X',{le:[0.7,0.6],lw:[-0.6,-0.1],re:[-0.7,0.6],rw:[0.6,-0.05]}],
- ['X AI swapped labels','X',{le:[0.75,0.7],lw:[0.12,0.2],re:[-0.75,0.7],rw:[-0.12,0.25]}],
- ['X forearms cross, wrists level','X',{le:[0.8,0.8],lw:[-0.05,0.15],re:[-0.8,0.8],rw:[0.05,0.15]}],
- ['X no elbows','X',{le:[0.75,0.7],lw:[-0.3,0.2],re:[-0.75,0.7],rw:[0.3,0.25],eV:0.1}],
+ ['O left arm straight up','O',{le:[0.6,-0.9],lw:[0.6,-1.8],re:[-0.6,0.9],rw:[-0.6,1.8]}],
+ ['O left arm bent up','O',{le:[1.0,-0.2],lw:[0.8,-1.0],re:[-0.6,0.9],rw:[-0.6,1.8]}],
+ ['O left hand only to head height','O',{le:[0.9,-0.3],lw:[0.7,-0.65],re:[-0.6,0.9],rw:[-0.6,1.8]}],
+ ['O left wrist off screen','O',{le:[0.6,-0.9],lw:[0.6,-1.8],re:[-0.6,0.9],rw:[-0.6,1.8],lwV:0.1}],
+ ['O right arm out of frame','O',{le:[0.6,-0.9],lw:[0.6,-1.8],re:[-0.6,0.9],rw:[-0.6,1.8],reV:0.1,rwV:0.1}],
+ ['X right arm straight up','X',{le:[0.6,0.9],lw:[0.6,1.8],re:[-0.6,-0.9],rw:[-0.6,-1.8]}],
+ ['X right arm bent up','X',{le:[0.6,0.9],lw:[0.6,1.8],re:[-1.0,-0.2],rw:[-0.8,-1.0]}],
+ ['X right hand over head','X',{le:[0.6,0.9],lw:[0.6,1.8],re:[-0.7,-0.8],rw:[-0.1,-1.7]}],
+ ['both arms up',null,sym([0.8,-0.8],[0.8,-1.7])],
+ ['O-shape both hands',null,sym([0.9,-0.9],[0.15,-1.6])],
+ ['X cross in front',null,{le:[0.7,0.6],lw:[-0.6,-0.1],re:[-0.7,0.6],rw:[0.6,-0.05]}],
  ['hands on hips',null,sym([1.0,0.8],[0.6,1.45])],
- ['one hand up',null,{le:[0.7,-0.8],lw:[0.6,-1.6],re:[-0.6,0.9],rw:[-0.6,1.8]}],
+ ['left hand at shoulder (not high enough)',null,{le:[0.8,0.5],lw:[0.6,-0.2],re:[-0.6,0.9],rw:[-0.6,1.8]}],
  ['T-pose',null,sym([1.2,0],[1.9,0])],
  ['hands front open',null,sym([0.7,0.7],[0.7,0.1])],
 ];
